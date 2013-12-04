@@ -31,15 +31,15 @@ public class HttpHelloWorldServerPipelineFactory implements ChannelPipelineFacto
     public ChannelPipeline getPipeline() throws Exception {
         ChannelPipeline pipeline = pipeline();
 
-        pipeline.addLast("decoder", new HttpRequestDecoder());
-        pipeline.addLast("encoder", new HttpResponseEncoder());
+        pipeline.addLast("decoder",  new HttpRequestDecoder());
+        pipeline.addLast("encoder",  new HttpResponseEncoder());
         pipeline.addLast("deflater", new HttpContentCompressor());
-        pipeline.addLast("cors", new CorsFilter(createPolicy()));
-        pipeline.addLast("handler", new HttpHelloWorldServerHandler());
+        pipeline.addLast("cors",     new CorsHandler(createCorsPolicy()));
+        pipeline.addLast("handler",  new HttpHelloWorldServerHandler());
         return pipeline;
     }
 
-     private Map<String, CorsPolicy> createPolicy(){
+     private Map<String, CorsPolicy> createCorsPolicy(){
          CorsPolicy corsPolicy;
          TreeSet<String> origin = new TreeSet<String>();
          origin.add("*");
@@ -71,6 +71,7 @@ public class HttpHelloWorldServerPipelineFactory implements ChannelPipelineFacto
                  header2
          );
          Map<String, CorsPolicy> m = new HashMap<String, CorsPolicy>();
+
          m.put("/", corsPolicy);
          m.put("/[1-9]", corsPolicy2);
          return m;

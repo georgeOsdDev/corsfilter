@@ -20,7 +20,7 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 /**
  *
  */
-public class CorsFilter extends SimpleChannelHandler {
+public class CorsHandler extends SimpleChannelHandler {
 
     private Map<String, CorsPolicy> corsPolicies;
 
@@ -33,7 +33,7 @@ public class CorsFilter extends SimpleChannelHandler {
     /**
      * Creates a new instance.
      */
-    public CorsFilter(Map<String, CorsPolicy> corsPolicies) {
+    public CorsHandler(Map<String, CorsPolicy> corsPolicies) {
         this.corsPolicies = corsPolicies;
     }
 
@@ -41,6 +41,7 @@ public class CorsFilter extends SimpleChannelHandler {
         return this.corsPolicies;
     }
 
+    // Map keys are regex of uri
     public void setCorsPolicy(Map<String, CorsPolicy> corsPolicies) {
         this.corsPolicies = corsPolicies;
     }
@@ -62,6 +63,8 @@ public class CorsFilter extends SimpleChannelHandler {
         CorsPolicy policy = null;
         HttpRequest request = (HttpRequest) e.getMessage();
         HttpHeaders headers = request.headers();
+
+        // get policy that corresponding to the uri
         String uri = request.getUri();
         QueryStringDecoder decoder = new QueryStringDecoder(uri);
         String path = decoder.getPath();
@@ -75,6 +78,7 @@ public class CorsFilter extends SimpleChannelHandler {
                 break;
             }
         }
+
         if (policy == null) {
             ctx.sendUpstream(e);
             return;
