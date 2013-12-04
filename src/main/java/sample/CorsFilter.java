@@ -10,12 +10,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.DownstreamMessageEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
 /**
  *
@@ -29,8 +29,6 @@ public class CorsFilter extends SimpleChannelHandler {
 
     final private static String ALLOWORIGINALL = "*";
     final private static String COMMASPACE = ", ";
-
-    private Boolean done = false;
 
     /**
      * Creates a new instance.
@@ -50,6 +48,7 @@ public class CorsFilter extends SimpleChannelHandler {
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
             throws Exception {
+
         if (this.corsPolicies == null) {
             ctx.sendUpstream(e);
             return;
@@ -59,12 +58,13 @@ public class CorsFilter extends SimpleChannelHandler {
             ctx.sendUpstream(e);
             return;
         }
+
+        CorsPolicy policy = null;
         HttpRequest request = (HttpRequest) e.getMessage();
         HttpHeaders headers = request.headers();
         String uri = request.getUri();
-        String[] s = uri.split("\\?");
-        String path = s[0];
-        CorsPolicy policy = null;
+        QueryStringDecoder decoder = new QueryStringDecoder(uri);
+        String path = decoder.getPath();
         Iterator<String> iterator = this.corsPolicies.keySet().iterator();
         while (iterator.hasNext()) {
             String key = iterator.next();
@@ -84,23 +84,16 @@ public class CorsFilter extends SimpleChannelHandler {
         m.put("headers", headers);
         queue.offer(m);
         ctx.sendUpstream(e);
-        done = false;
     }
 
     @Override
     public void writeRequested(ChannelHandlerContext ctx, MessageEvent e)
             throws Exception {
-        if (done) {
-            queue.clear();
-            ctx.sendDownstream(e);
-            return;
-        }
         if (this.corsPolicies == null) {
-            queue.clear();
             ctx.sendDownstream(e);
             return;
         }
-        Object msg = ((DownstreamMessageEvent) e).getMessage();
+        Object msg = e.getMessage();
         if (!(msg instanceof HttpResponse)) {
             ctx.sendDownstream(e);
             return;
@@ -123,7 +116,6 @@ public class CorsFilter extends SimpleChannelHandler {
         setAllowMethods(response, corsPolicy);
         setAllowHeaders(response, corsPolicy);
         queue.clear();
-        done = true;
         ctx.sendDownstream(e);
     }
 
@@ -220,7 +212,7 @@ public class CorsFilter extends SimpleChannelHandler {
               while (iter.hasNext()) {
                 sb.append(sepalator).append(iter.next());
               }
-            }
+        }
         return sb.toString();
     }
 }

@@ -72,7 +72,7 @@ public class HttpHelloWorldServerPipelineFactory implements ChannelPipelineFacto
          );
          Map<String, CorsPolicy> m = new HashMap<String, CorsPolicy>();
          m.put("/", corsPolicy);
-         m.put("/[1-9]/", corsPolicy2);
+         m.put("/[1-9]", corsPolicy2);
          return m;
      }
 }
